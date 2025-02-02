@@ -71,7 +71,7 @@ class ListCustomSearch(Container):
             from tmdbhelper.lib.addon.plugin import encode_url
             self.container_update = f'{encode_url(PLUGINPATH, **kwargs)},replace'
         from xbmcplugin import SORT_METHOD_UNSORTED
-        items = self.mdblist_api.get_list_of_lists(path=f'lists/search?s={query}')
+        items = self.mdblist_api.get_list_of_lists_search(query)
         self.library = 'video'
         self.sort_methods = [{'sortMethod': SORT_METHOD_UNSORTED, 'label2Mask': '%U'}]  # Label2 Mask by Studio (i.e. User Name)
         return items

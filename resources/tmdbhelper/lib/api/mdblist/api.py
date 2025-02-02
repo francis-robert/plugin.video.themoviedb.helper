@@ -289,10 +289,13 @@ class MDbList(RequestAPI):
         response = MDbListRatingMapping(response)
         return response.ratings
 
-    def get_list_of_lists(self, path, page=1, limit: int = None):  # TODO: MAke sure works in new style
+    def get_list_of_lists(self, path, page=1, limit: int = None):
         response = self.get_request_sc(path, cache_refresh=True if page == 1 else False)
         response = MDbListPaginationListLists(response, page=page, limit=limit or 250)
         return response.items if not response.next_page else response.items + response.next_page
+
+    def get_list_of_lists_search(self, query):
+        return self.get_list_of_lists(path=f'lists/search?query={query}')
 
     def get_custom_trakt_style_list(self, list_id):
         path = f'lists/{list_id}/items'
