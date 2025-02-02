@@ -344,15 +344,15 @@ class _MDbListUser():
 
     def _select_static_list(self):
         if self.static_lists is None:  # No API credentials
-            Dialog().ok('MDbList', 'MDbList API credentials not found.\nAdd your personal MDbList API key in TMDbHelper settings.')
+            Dialog().ok('MDbList', f'{get_localized(32516)}\n{get_localized(32517)}')
             return -1
 
         if not self.static_lists:  # No static lists
-            Dialog().ok('MDbList', 'No static lists found for current MDbList user.')
+            Dialog().ok('MDbList', get_localized(32518))
             return -1
 
         names = [i.get('name', '') for i in self.static_lists]
-        return Dialog().select('Select list', names)
+        return Dialog().select(get_localized(32133), names)
 
     def _add_to_static_list(self):
         x = self._select_static_list()
