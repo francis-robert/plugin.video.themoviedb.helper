@@ -327,9 +327,29 @@ class _MDbListUser():
         self._item, self._trakt = item, item._trakt
         set_kwargattr(self, kwargs)
 
+    @property
+    def remove(self):
+        try:
+            return self._remove
+        except AttributeError:
+            if get_infolabel("ListItem.Property(param.info)") != 'mdblist_userlist':
+                self._remove = False
+                return self._remove
+            if get_infolabel("ListItem.Property(param.dynamic)"):
+                self._remove = False
+                return self._remove
+            self._remove = True
+            return self._remove
+
     def _getself(self):
-        self.name = get_localized(32514)
+        self.name = get_localized(32519) if self.remove else get_localized(32514)
         return self
+
+    @property
+    def trakt_type(self):
+        if self._item.trakt_type in ['season', 'episode']:
+            return 'show'
+        return self._item.trakt_type
 
     @property
     def static_lists(self):
@@ -354,33 +374,49 @@ class _MDbListUser():
         names = [i.get('name', '') for i in self.static_lists]
         return Dialog().select(get_localized(32133), names)
 
-    def _add_to_static_list(self):
-        x = self._select_static_list()
+    def get_msg(self, response):
+        if not response or not response.status_code == 200:
+            return f'{get_localized(32138)}\nHTTP {response}'
+        response_json = response.json()
+        if response_json.get('added', {}).get(f'{self.trakt_type}s'):
+            return get_localized(32136)
+        if response_json.get('deleted', {}).get(f'{self.trakt_type}s'):
+            return get_localized(32135)
+        if response_json.get('existing', {}).get(f'{self.trakt_type}s'):
+            return f'{get_localized(32138)}\n{get_localized(32515)}'
+        if response_json.get('not_found', {}).get(f'{self.trakt_type}s'):
+            return f'{get_localized(32137)}\n{get_localized(32040)}'
+        return 'Unknown'
 
+    def get_list_id(self):
+        x = self._select_static_list()
         if x == -1:
             return
+        return self.static_lists[x]['id']
 
-        list_id = self.static_lists[x]['id']
-        trakt_type = 'show' if self._item.trakt_type in ['season', 'episode'] else self._item.trakt_type
-        response = MDbList().add_item_to_static_list(list_id, media_type=trakt_type, media_id=self._item.unique_id, media_provider=self._item.id_type)
-
-        def get_msg():
-            if not response or not response.status_code == 200:
-                return f'{get_localized(32138)}\nHTTP {response}'
-            response_json = response.json()
-            if response_json.get('added', {}).get(f'{trakt_type}s'):
-                return get_localized(32136)
-            if response_json.get('existing', {}).get(f'{trakt_type}s'):
-                return f'{get_localized(32138)}\n{get_localized(32515)}'
-            if response_json.get('not_found', {}).get(f'{trakt_type}s'):
-                return f'{get_localized(32138)}\n{get_localized(32040)}'
-            return ''
-
-        Dialog().ok('MDbList', get_msg().format(trakt_type, self._item.unique_id, self.static_lists[x]['name']))
+    def _modify_static_list(self, action='add', list_id=None):
+        list_id = list_id or self.get_list_id()
+        if not list_id:
+            return
+        response = MDbList().modify_static_list(
+            list_id,
+            media_type=self.trakt_type,
+            media_id=self._item.unique_id,
+            media_provider=self._item.id_type,
+            action=action
+        )
+        Dialog().ok('MDbList', self.get_msg(response).format(self.trakt_type, self._item.unique_id, list_id))
+        executebuiltin('Container.Refresh')
+        get_property('Widgets.Reload', set_property=f'{set_timestamp(0, True)}')
 
     def sync(self):
         self._sync = -1
-        self._add_to_static_list()
+
+        if self.remove:
+            self._modify_static_list(action='remove', list_id=get_infolabel("ListItem.Property(param.list_id)"))
+            return self._sync
+
+        self._modify_static_list(action='add')
         return self._sync
 
 

@@ -2636,6 +2636,11 @@ msgctxt "#32518"
 msgid "No static lists found for current MDbList user."
 msgstr ""
 
+#: /resources/tmdbhelper/lib/script/sync.py
+msgctxt "#32519"
+msgid "Remove from MDbList list"
+msgstr ""
+
 msgctxt "#30030"
 msgid "Hindi (India)"
 msgstr ""
