@@ -7,10 +7,11 @@ from tmdbhelper.lib.addon.thread import ParallelThread
 from jurialmunkey.window import get_property
 from tmdbhelper.lib.addon.dialog import BusyDialog
 from jurialmunkey.parser import try_int
-from tmdbhelper.lib.addon.plugin import set_kwargattr, convert_trakt_type, get_localized, executebuiltin, get_infolabel
+from tmdbhelper.lib.addon.plugin import set_kwargattr, convert_trakt_type, get_localized, executebuiltin, get_infolabel, get_setting
 from tmdbhelper.lib.api.trakt.api import TraktAPI
 from tmdbhelper.lib.update.userlist import get_monitor_userlists
 from tmdbhelper.lib.update.library import add_to_library
+from tmdbhelper.lib.api.mdblist.api import MDbList
 
 
 def _menu_item_watchlist():
@@ -74,6 +75,10 @@ def _menu_item_userlist():
     return {'class': _UserList}
 
 
+def _menu_item_mdblist():
+    return {'class': _MDbListUser}
+
+
 def _menu_item_progress():
     return {'class': _ProgressItem}
 
@@ -100,6 +105,7 @@ def _menu_items():
     """
     return [
         _menu_item_userlist(),
+        _menu_item_mdblist(),
         _menu_item_watched(),
         _menu_item_unwatched(),
         _menu_item_progress(),
@@ -313,6 +319,68 @@ class _UserList():
                 season=self._item.season, episode=self._item.episode, remove=self.remove)
         if self._sync and self._sync.status_code in [200, 201, 204] and self._item.id_type == 'tmdb':
             self._addlibrary(convert_trakt_type(self._item.trakt_type), self._item.unique_id, slug=slug)
+        return self._sync
+
+
+class _MDbListUser():
+    def __init__(self, item, **kwargs):
+        self._item, self._trakt = item, item._trakt
+        set_kwargattr(self, kwargs)
+
+    def _getself(self):
+        self.name = get_localized(32514)
+        return self
+
+    @property
+    def static_lists(self):
+        try:
+            return self._static_lists
+        except AttributeError:
+            if not get_setting('mdblist_apikey', 'str'):
+                return
+            response = MDbList().get_request('lists', 'user')
+            self._static_lists = [i for i in response if i and not i.get('dynamic')]
+            return self._static_lists
+
+    def _select_static_list(self):
+        if self.static_lists is None:  # No API credentials
+            Dialog().ok('MDbList', 'MDbList API credentials not found.\nAdd your personal MDbList API key in TMDbHelper settings.')
+            return -1
+
+        if not self.static_lists:  # No static lists
+            Dialog().ok('MDbList', 'No static lists found for current MDbList user.')
+            return -1
+
+        names = [i.get('name', '') for i in self.static_lists]
+        return Dialog().select('Select list', names)
+
+    def _add_to_static_list(self):
+        x = self._select_static_list()
+
+        if x == -1:
+            return
+
+        list_id = self.static_lists[x]['id']
+        trakt_type = 'show' if self._item.trakt_type in ['season', 'episode'] else self._item.trakt_type
+        response = MDbList().add_item_to_static_list(list_id, media_type=trakt_type, media_id=self._item.unique_id, media_provider=self._item.id_type)
+
+        def get_msg():
+            if not response or not response.status_code == 200:
+                return f'{get_localized(32138)}\nHTTP {response}'
+            response_json = response.json()
+            if response_json.get('added', {}).get(f'{trakt_type}s'):
+                return get_localized(32136)
+            if response_json.get('existing', {}).get(f'{trakt_type}s'):
+                return f'{get_localized(32138)}\n{get_localized(32515)}'
+            if response_json.get('not_found', {}).get(f'{trakt_type}s'):
+                return f'{get_localized(32138)}\n{get_localized(32040)}'
+            return ''
+
+        Dialog().ok('MDbList', get_msg().format(trakt_type, self._item.unique_id, self.static_lists[x]['name']))
+
+    def sync(self):
+        self._sync = -1
+        self._add_to_static_list()
         return self._sync
 
 

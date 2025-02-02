@@ -2606,6 +2606,21 @@ msgctxt "#32512"
 msgid "Cache disk reads to memory"
 msgstr ""
 
+#: /resources/settings.xml
+msgctxt "#32513"
+msgid "MDbList options"
+msgstr ""
+
+#: /resources/tmdbhelper/lib/script/sync.py
+msgctxt "#32514"
+msgid "Add to MDbList list"
+msgstr ""
+
+#: /resources/tmdbhelper/lib/script/sync.py
+msgctxt "#32515"
+msgid "Already exists in list."
+msgstr ""
+
 msgctxt "#30030"
 msgid "Hindi (India)"
 msgstr ""

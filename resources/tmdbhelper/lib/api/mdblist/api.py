@@ -281,6 +281,11 @@ class MDbList(RequestAPI):
             req_api_url='https://api.mdblist.com')  # OLD API = https://mdblist.com/api
         MDbList.api_key = api_key
 
+    def add_item_to_static_list(self, list_id, media_type, media_id, media_provider='tmdb'):
+        item = {f'{media_type}s': [{media_provider: media_id}]}
+        path = self.get_request_url('lists', list_id, 'items', 'add')
+        return self.get_api_request(path, postdata=item, method='json')
+
     def get_details(self, media_type, media_id, media_provider='tmdb'):
         return self.get_request_sc(media_provider, media_type, media_id)  # TODO: Add append_to_response=review ?
 
