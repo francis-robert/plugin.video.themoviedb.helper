@@ -938,6 +938,14 @@ def _get_basedir_main():
                 'landscape': f'{ADDONPATH}/fanart.jpg',
                 'icon': f'{ADDONPATH}/resources/icons/themoviedb/default.png'}},
         {
+            'label': u'TMDb User',
+            'types': [None],
+            'params': {'info': 'dir_tmdb_v4'},
+            'path': PLUGINPATH,
+            'art': {
+                'landscape': f'{ADDONPATH}/fanart.jpg',
+                'icon': f'{ADDONPATH}/resources/icons/themoviedb/default.png'}},
+        {
             'label': u'Trakt',
             'types': [None],
             'params': {'info': 'dir_trakt'},
@@ -1136,6 +1144,58 @@ def get_basedir_details(tmdb_type, tmdb_id, season=None, episode=None, detailed_
     return items
 
 
+def _get_basedir_tmdb_v4():
+    return [
+        {
+            'label': u'{}{{space}}{{item_type}}'.format(get_localized(32223)),
+            'types': ['movie', 'tv'],
+            'params': {'info': 'tmdb_v4_recommendations'},
+            'path': PLUGINPATH,
+            'art': {
+                'landscape': f'{ADDONPATH}/fanart.jpg',
+                'icon': f'{ADDONPATH}/resources/icons/themoviedb/popular.png'}},
+        {
+            'label': u'{}{{space}}{{item_type}}'.format(get_localized(1036)),
+            'types': ['movie', 'tv'],
+            'params': {'info': 'tmdb_v4_favorites'},
+            'path': PLUGINPATH,
+            'art': {
+                'landscape': f'{ADDONPATH}/fanart.jpg',
+                'icon': f'{ADDONPATH}/resources/icons/themoviedb/recommended.png'}},
+        {
+            'label': u'{}{{space}}{{item_type}}'.format(get_localized(32521)),
+            'types': ['movie', 'tv'],
+            'params': {'info': 'tmdb_v4_rated'},
+            'path': PLUGINPATH,
+            'art': {
+                'landscape': f'{ADDONPATH}/fanart.jpg',
+                'icon': f'{ADDONPATH}/resources/icons/themoviedb/tags.png'}},
+        {
+            'label': u'{}{{space}}{{item_type}}'.format(get_localized(32193)),
+            'types': ['movie', 'tv'],
+            'params': {'info': 'tmdb_v4_watchlist'},
+            'path': PLUGINPATH,
+            'art': {
+                'landscape': f'{ADDONPATH}/fanart.jpg',
+                'icon': f'{ADDONPATH}/resources/icons/themoviedb/similar.png'}},
+        {
+            'label': get_localized(32211),
+            'types': ['both'],
+            'params': {'info': 'tmdb_v4_lists'},
+            'path': PLUGINPATH,
+            'art': {
+                'landscape': f'{ADDONPATH}/fanart.jpg',
+                'icon': f'{ADDONPATH}/resources/icons/themoviedb/reviews.png'}},
+    ]
+
+
+def _get_tmdb_v4():
+    from tmdbhelper.lib.api.tmdb.users import TMDbUser
+    if not TMDbUser().authenticator.authorised_access:
+        return
+    return _build_basedir(None, _get_basedir_tmdb_v4())
+
+
 class ListBaseDir(Container):
     def get_items(self, info=None, **kwargs):
         route = {
@@ -1151,6 +1211,7 @@ class ListBaseDir(Container):
             'dir_calendar_library': lambda: _get_basedir_calendar(info='library_nextaired'),
             'dir_custom_node': lambda: _get_basedir_nodes(filename=kwargs.get('filename'), basedir=kwargs.get('basedir')),
             'dir_trakt_genre': lambda: _get_basedir_trakt_genre_types(genre=kwargs.get('genre'), tmdb_type=kwargs.get('tmdb_type')),
+            'dir_tmdb_v4': lambda: _get_tmdb_v4(),
             'dir_settings': lambda: ADDON.openSettings()
         }
         func = route.get(info, lambda: _build_basedir(None, _get_basedir_main()))

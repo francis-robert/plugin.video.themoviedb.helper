@@ -2641,6 +2641,16 @@ msgctxt "#32519"
 msgid "Remove from MDbList list"
 msgstr ""
 
+#: /resources/settings.xml
+msgctxt "#32520"
+msgid "TMDb"
+msgstr ""
+
+#: /resources/tmdbhelper/lib/addon/consts.py
+msgctxt "#32521"
+msgid "Rated"
+msgstr ""
+
 msgctxt "#30030"
 msgid "Hindi (India)"
 msgstr ""

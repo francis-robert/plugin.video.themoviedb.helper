@@ -202,6 +202,9 @@ TMDB_COMBO_LISTS_ROUTE = {
 TMDB_BASIC_LISTS_ROUTE = {
     'module_name': 'tmdbhelper.lib.api.tmdb.lists',
     'import_attr': 'ListBasic'}
+TMDB_LISTS_LISTS_ROUTE = {
+    'module_name': 'tmdbhelper.lib.api.tmdb.lists',
+    'import_attr': 'ListLists'}
 TMDB_BASIC_LISTS = {
     'popular': {
         'path': '{tmdb_type}/popular',
@@ -529,7 +532,55 @@ TMDB_BASIC_LISTS = {
         'route': TMDB_BASIC_LISTS_ROUTE,
         'plugin_category': '{localized} {plural}',
         'localized': 535
-    }
+    },
+    'tmdb_v4_recommendations': {
+        'path': 'account/{{account_id}}/{tmdb_type}/recommendations',
+        'key': 'results',
+        'route': TMDB_BASIC_LISTS_ROUTE,
+        'plugin_category': '{localized} {plural}',
+        'localized': 32223,
+        'tmdb_v4_user_list': True
+    },
+    'tmdb_v4_favorites': {
+        'path': 'account/{{account_id}}/{tmdb_type}/favorites',
+        'key': 'results',
+        'route': TMDB_BASIC_LISTS_ROUTE,
+        'plugin_category': '{localized} {plural}',
+        'localized': 1036,
+        'tmdb_v4_user_list': True
+    },
+    'tmdb_v4_watchlist': {
+        'path': 'account/{{account_id}}/{tmdb_type}/watchlist',
+        'key': 'results',
+        'route': TMDB_BASIC_LISTS_ROUTE,
+        'plugin_category': '{localized} {plural}',
+        'localized': 32193,
+        'tmdb_v4_user_list': True
+    },
+    'tmdb_v4_rated': {
+        'path': 'account/{{account_id}}/{tmdb_type}/rated',
+        'key': 'results',
+        'route': TMDB_BASIC_LISTS_ROUTE,
+        'plugin_category': '{localized} {plural}',
+        'localized': 32521,
+        'tmdb_v4_user_list': True
+    },
+    'tmdb_v4_lists': {
+        'path': 'account/{{account_id}}/lists',
+        'key': 'results',
+        'route': TMDB_LISTS_LISTS_ROUTE,
+        'plugin_category': '{localized} {plural}',
+        'localized': 32211,
+        'tmdb_v4_user_list': True
+    },
+    'tmdb_v4_list': {
+        'path': 'list/{list_id}',
+        'key': 'results',
+        'route': TMDB_BASIC_LISTS_ROUTE,
+        'plugin_category': '{localized} {plural}',
+        'localized': 32211,
+        'tmdb_v4_user_list': True
+    },
 }
 
 
