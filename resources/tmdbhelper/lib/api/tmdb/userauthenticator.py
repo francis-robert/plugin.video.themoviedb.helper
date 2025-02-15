@@ -1,4 +1,4 @@
-from tmdbhelper.lib.api.api_keys.tmdb import USER_TOKEN
+from tmdbhelper.lib.api.api_keys.tmdb import USER_TOKEN, API_READ_ACCESS_TOKEN
 from tmdbhelper.lib.addon.logger import kodi_log
 
 
@@ -10,21 +10,24 @@ class TMDbUserAuthenticator():
     interval = 5
     expires_in = 120
     user_token = USER_TOKEN
+    api_read_access_token = API_READ_ACCESS_TOKEN
 
     def __init__(self, parent):
         self._parent = parent
         self.progress = 0
 
-    def get_response_json(self, *args, **kwargs):
-        return self._parent.get_response_json(*args, **kwargs)
-
     @property
     def read_access_headers(self):
-        try:
-            return self._read_access_headers
-        except AttributeError:
-            self._read_access_headers = {'Authorization': f'Bearer {self._parent.api_read_access_token}'}
-            return self._read_access_headers
+        return {'Authorization': f'Bearer {self.api_read_access_token}'}
+
+    def get_request_url(self, *args, **kwargs):
+        return self._parent.get_request_url(*args, **kwargs)
+
+    def get_response_json(self, *args, **kwargs):
+        return self._parent.get_response_json(*args, headers=self.read_access_headers, **kwargs)
+
+    def get_simple_api_request(self, *args, **kwargs):
+        return self._parent.get_simple_api_request(*args, headers=self.read_access_headers, **kwargs)
 
     @property
     def xbmc_monitor(self):
@@ -60,7 +63,7 @@ class TMDbUserAuthenticator():
         return request.get('request_token')
 
     def create_request_token(self):
-        return self.get_response_json('auth/request_token', headers=self.read_access_headers, method='post')
+        return self.get_response_json('auth/request_token', method='post')
 
     @property
     def access_token(self):
@@ -101,9 +104,7 @@ class TMDbUserAuthenticator():
         self._stored_authorisation = value
 
     def create_access_token(self):
-        url_path = self._parent.get_request_url('auth/access_token')
-        postdata = {'request_token': self.request_token}
-        response = self._parent.get_simple_api_request(url_path, headers=self.read_access_headers, postdata=postdata, method='json')
+        response = self.get_simple_api_request(self.get_request_url('auth/access_token'), postdata={'request_token': self.request_token}, method='json')
         if response is None or not response.status_code:
             return
         if response.status_code == 200:

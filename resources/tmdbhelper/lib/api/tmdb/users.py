@@ -1,32 +1,32 @@
 from tmdbhelper.lib.api.tmdb.api import TMDbAPI, TMDb
-from tmdbhelper.lib.api.api_keys.tmdb import API_READ_ACCESS_TOKEN
 from tmdbhelper.lib.api.tmdb.userauthenticator import TMDbUserAuthenticator
+from tmdbhelper.lib.api.tmdb.userlistmethods import TMDbUserListMethods
+from tmdbhelper.lib.api.tmdb.useritemmethods import TMDbUserItemMethods
 # from tmdbhelper.lib.addon.logger import kodi_log
 
 
-API_URL = 'https://api.themoviedb.org/4'
+API_URL = 'https://api.themoviedb.org'
 
 
-class TMDbUser(TMDbAPI):
+class TMDbUser(TMDbAPI, TMDbUserListMethods, TMDbUserItemMethods):
     api_url = API_URL
     api_key = ''
     api_name = 'TMDbUser'
-    api_read_access_token = API_READ_ACCESS_TOKEN
 
     @property
-    def tmdb_v3_api(self):
+    def tmdb_api(self):
         try:
-            return self._tmdb_v3_api
+            return self._tmdb_api
         except AttributeError:
-            self._tmdb_v3_api = TMDb()
-            return self._tmdb_v3_api
+            self._tmdb_api = TMDb()
+            return self._tmdb_api
 
     @property
     def genres(self):
         try:
             return self._genres
         except AttributeError:
-            self._genres = self.tmdb_v3_api.genres
+            self._genres = self.tmdb_api.genres
             return self._genres
 
     @property
@@ -39,107 +39,29 @@ class TMDbUser(TMDbAPI):
 
     @property
     def authorised_headers(self):
+        """ Property to get authorised token for user via authenticator """
         return {'Authorization': f'Bearer {self.authenticator.access_token}'}
 
+    def format_authorised_path(self, path):
+        return path.format(**self.authenticator.authorised_access)
+
+    def get_request_url(self, *args, **kwargs):
+        """ Wrapper to insert v4 API path into urls """
+        return super(TMDbUser, self).get_request_url('4', *args, **kwargs)
+
     def get_authorised_response_json(self, *args, **kwargs):
+        """ Method to call paths requiring user authorisation """
         return self.get_response_json(*args, headers=self.authorised_headers, **kwargs)
 
-    def get_list_of_lists(self):
-        if not self.authenticator.authorised_access:
-            return []
+    def get_request_url_v3(self, *args, **kwargs):
+        """ Diversion to build v3 URLs for some endpoints not supported in v4 """
+        return super(TMDbUser, self).get_request_url('3', *args, **kwargs)
 
-        path = 'account/{account_id}/lists'.format(**self.authenticator.authorised_access)
-        response = self.get_authorised_response_json(path)
+    def get_response_json_v3(self, *args, postdata=None, headers=None, method=None, **kwargs):
+        """ Diversion to request v3 URLs for some endpoints not supported in v4 """
+        kwargs = self.configure_request_kwargs(kwargs)
+        return self.get_api_request_json(self.get_request_url_v3(*args, **kwargs), postdata=postdata, headers=headers, method=method)
 
-        if not response or not response.get('results'):
-            return []
-
-        from tmdbhelper.lib.api.tmdb.mapping import get_imagepath_fanart
-
-        def configure_item(i):
-            i_name = i.get('name') or ''
-            i_list_id = str(i.get('id') or '')
-            i_user_id = self.authenticator.authorised_access.get('account_id')
-            i_artwork = get_imagepath_fanart(i.get('backdrop_path'))
-
-            item = {}
-            item['label'] = i_name
-            item['infolabels'] = {'plot': i.get('description')}
-            item['infoproperties'] = {k: v for k, v in i.items() if v and type(v) not in [list, dict]}
-            item['art'] = {
-                'fanart': i_artwork,
-                'poster': i_artwork,
-            }
-            item['params'] = {
-                'info': 'tmdb_v4_list',
-                'tmdb_type': 'both',
-                'list_name': i_name,
-                'list_id': i_list_id,
-                'user_id': i_user_id,
-                'plugin_category': i_name}
-            item['unique_ids'] = {
-                'list': i_list_id,
-                'user': i_user_id}
-            item['context_menu'] = []
-
-            return item
-
-        return [configure_item(i) for i in response['results'] if i]
-
-    def get_basic_list(
-        self, path, tmdb_type, key='results', params=None, base_tmdb_type=None, limit=None, filters={},
-        sort_key=None, sort_key_order=None, paginated=True, length=None, **kwargs
-    ):
-
-        if not self.authenticator.authorised_access:
-            return []
-
-        from jurialmunkey.parser import try_int
-
-        length = length or self.page_length
-        path = path.format(**self.authenticator.authorised_access)
-
-        def _get_page(page):
-            kwargs['page'] = page
-            return self.get_authorised_response_json(path, **kwargs)
-
-        def _get_results(response):
-            try:
-                return response[key] or []
-            except (KeyError, TypeError):
-                return []
-
-        def _get_response(page, length):
-            results = []
-            page = try_int(page, fallback=1)
-            for x in range(try_int(length, fallback=1)):
-                response = _get_page(page + x)
-                results += _get_results(response)
-                if int(response.get('total_pages') or 1) <= int(response.get('page') or 1):
-                    break
-            return response, results
-
-        response, results = _get_response(kwargs.get('page'), length=length)
-        results = sorted(results, key=lambda i: i.get(sort_key, 0), reverse=sort_key_order != 'asc') if sort_key else results
-
-        add_infoproperties = [('total_pages', response.get('total_pages')), ('total_results', response.get('total_results'))]
-
-        item_tmdb_type = None if tmdb_type == 'both' else tmdb_type
-
-        items = [
-            self.mapper.get_info(
-                i, item_tmdb_type or i.get('media_type', ''),
-                definition=params,
-                base_tmdb_type=base_tmdb_type,
-                iso_country=self.iso_country,
-                add_infoproperties=add_infoproperties)
-            for i in results if i]
-
-        if filters:
-            from tmdbhelper.lib.items.filters import is_excluded
-            items = [i for i in items if not is_excluded(i, **filters)]
-
-        if not paginated:
-            return items
-
-        return self.get_paginated_items(items, limit, kwargs['page'], response.get('total_pages'))
+    def get_authorised_response_json_v3(self, *args, **kwargs):
+        """ Diversion to request authorised v3 URLs for some endpoints not supported in v4 """
+        return self.get_response_json_v3(*args, headers=self.authorised_headers, **kwargs)
