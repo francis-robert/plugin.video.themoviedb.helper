@@ -2636,6 +2636,66 @@ msgctxt "#32509"
 msgid "Use alternative TMDb API url"
 msgstr "Usar url alternativa para API do TMDb"
 
+#: /resources/settings.xml
+msgctxt "#32510"
+msgid "Items only"
+msgstr "Apenas itens"
+
+#: /resources/settings.xml
+msgctxt "#32511"
+msgid "Items"
+msgstr "Itens"
+
+#: /resources/settings.xml
+msgctxt "#32512"
+msgid "Cache disk reads to memory"
+msgstr "Leituras de disco de cache na memória"
+
+#: /resources/settings.xml
+msgctxt "#32513"
+msgid "MDbList options"
+msgstr "Opções mdblist"
+
+#: /resources/tmdbhelper/lib/script/sync.py
+msgctxt "#32514"
+msgid "Add to MDbList list"
+msgstr "Adicionar à lista MDBlist"
+
+#: /resources/tmdbhelper/lib/script/sync.py
+msgctxt "#32515"
+msgid "Already exists in list."
+msgstr "Já existe na lista."
+
+#: /resources/tmdbhelper/lib/script/sync.py
+msgctxt "#32516"
+msgid "MDbList API credentials not found."
+msgstr "Credenciais da API do MDBLIST não encontradas."
+
+#: /resources/tmdbhelper/lib/script/sync.py
+msgctxt "#32517"
+msgid "Add your personal MDbList API key in TMDbHelper settings."
+msgstr "Adicionar sua chave API MDBLIST pessoal nas configurações do TMDBHelper."
+
+#: /resources/tmdbhelper/lib/script/sync.py
+msgctxt "#32518"
+msgid "No static lists found for current MDbList user."
+msgstr "Nenhuma lista estática encontrada para o usuário atual do MDBLIST."
+
+#: /resources/tmdbhelper/lib/script/sync.py
+msgctxt "#32519"
+msgid "Remove from MDbList list"
+msgstr "Remover da lista MDBlist"
+
+#: /resources/settings.xml
+msgctxt "#32520"
+msgid "TMDb"
+msgstr "TMDb"
+
+#: /resources/tmdbhelper/lib/addon/consts.py
+msgctxt "#32521"
+msgid "Rated"
+msgstr "Avaliado"
+
 msgctxt "#30030"
 msgid "Hindi (India)"
 msgstr "Hindi (Índia)"
