@@ -256,6 +256,15 @@ class WindowManager(_EventLoop):
         window.get_property(f'{PREFIX_PATH}{position}', set_property=path)
         window.get_property(PREFIX_POSITION, set_property=position)
 
+    def add_origin(self, tmdb_type, tmdb_id):
+        if not tmdb_type or not tmdb_id:
+            return
+        path = f'plugin://plugin.video.themoviedb.helper/?info=details&tmdb_type={tmdb_type}&tmdb_id={tmdb_id}'
+        path = _configure_path(path)
+        self.position += 1
+        self.set_properties(self.position, path)
+        self.params['return'] = True
+
     def call_auto(self):
         if window.get_property(PREFIX_INSTANCE):
             # Already instance running and has window open so let's exit
@@ -264,6 +273,9 @@ class WindowManager(_EventLoop):
             # Do some clean-up because we didn't exit cleanly last time
             window.get_property(PREFIX_INSTANCE, clear_property=True)
             self.reset_properties()
+
+        # Add a return origin if available
+        self.add_origin(self.params.get('origin_tmdb_type'), self.params.get('origin_tmdb_id'))
 
         # Start up our service to monitor the windows
         return self.event_loop()
@@ -279,7 +291,7 @@ class WindowManager(_EventLoop):
         window.wait_for_property(PREFIX_ADDPATH, path, True, poll=0.3)
         self.call_auto()
 
-    def add_query(self, query, tmdb_type, separator=' / '):
+    def make_query(self, query, tmdb_type, separator=' / '):
         if separator and separator in query:
             split_str = query.split(separator)
             x = Dialog().select(get_localized(32236), split_str)
@@ -291,7 +303,12 @@ class WindowManager(_EventLoop):
         if not tmdb_id:
             Dialog().notification('TMDbHelper', get_localized(32310).format(query))
             return
-        url = f'plugin://plugin.video.themoviedb.helper/?info=details&tmdb_type={tmdb_type}&tmdb_id={tmdb_id}'
+        return f'plugin://plugin.video.themoviedb.helper/?info=details&tmdb_type={tmdb_type}&tmdb_id={tmdb_id}'
+
+    def add_query(self, query, tmdb_type, separator=' / '):
+        url = self.make_query(query, tmdb_type, separator)
+        if not url:
+            return
         return self.add_path(url)
 
     def close_dialog(self):
