@@ -6,7 +6,6 @@ from tmdbhelper.lib.addon.plugin import get_condvisibility, get_localized, execu
 from tmdbhelper.lib.addon.dialog import BusyDialog
 from tmdbhelper.lib.api.tmdb.api import TMDb
 from tmdbhelper.lib.addon.logger import kodi_log
-from tmdbhelper.lib.items.router import Router
 from threading import Thread
 
 
@@ -25,16 +24,44 @@ def _configure_path(path):
     path = path.replace('info=play', 'info=details')
     path = path.replace('info=seasons', 'info=details')
     path = path.replace('info=related', 'info=details')
-    # TODO: Check if we still need this "extended=True" param
-    if 'extended=True' not in path:
-        path = f'{path}&extended=True'
     return path
+
+
+SV_ROUTES = {
+    'get_dbitem_movieset_details': {
+        'module_name': 'jurialmunkey.jrpcid',
+        'import_attr': 'ListGetMovieSetDetails'},
+    'get_dbitem_movie_details': {
+        'module_name': 'jurialmunkey.jrpcid',
+        'import_attr': 'ListGetMovieDetails'},
+    'get_dbitem_tvshow_details': {
+        'module_name': 'jurialmunkey.jrpcid',
+        'import_attr': 'ListGetTVShowDetails'},
+    'get_dbitem_season_details': {
+        'module_name': 'jurialmunkey.jrpcid',
+        'import_attr': 'ListGetSeasonDetails'},
+    'get_dbitem_episode_details': {
+        'module_name': 'jurialmunkey.jrpcid',
+        'import_attr': 'ListGetEpisodeDetails'},
+}
 
 
 def get_listitem(path):
     try:
-        _path = path.replace('plugin://plugin.video.themoviedb.helper/?', '')  # _path = f"info=details&tmdb_type={tmdb_type}&tmdb_id={tmdb_id}"
-        return Router(-1, _path).get_directory(items_only=True)[0].get_listitem()
+
+        base, pstr = path.split('?')
+
+        if base == 'plugin://plugin.video.themoviedb.helper/':
+            from tmdbhelper.lib.items.router import Router
+            return Router(-1, pstr).get_directory(items_only=True)[0].get_listitem()
+
+        if base == 'plugin://script.skinvariables/':
+            from jurialmunkey.modimp import importmodule
+            from jurialmunkey.parser import parse_paramstring
+            pstr, *_ = pstr.split('&&')
+            prms = parse_paramstring(pstr)
+            return importmodule(** SV_ROUTES[prms['info']])(-1, pstr, **prms).get_items(**prms)[0][1]
+
     except (TypeError, IndexError, KeyError, AttributeError, NameError):
         return
 
