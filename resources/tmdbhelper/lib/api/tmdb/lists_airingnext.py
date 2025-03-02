@@ -13,7 +13,7 @@ class ListAiringNext(Container):
         _cache = BasicCache(filename=f'NextAiring.db')
 
         class _ParallelThread(ParallelThread):
-            thread_max = min(get_setting('max_threads', mode='int'), 50)
+            thread_max = min(get_setting('max_threads', mode='int') or 50, 50)
 
         def _get_nextaired_item(tmdb_id):
             cache_name = f'{prefix}.{tmdb_id}'
