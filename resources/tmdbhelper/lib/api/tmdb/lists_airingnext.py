@@ -6,11 +6,10 @@ class ListAiringNext(Container):
     def _get_items(self, seed_items: list, prefix: str, reverse: bool = False, **kwargs):
         from tmdbhelper.lib.addon.thread import ParallelThread
         from tmdbhelper.lib.addon.tmdate import date_in_range, is_future_timestamp
-        from tmdbhelper.lib.files.bcache import BasicCache
         from tmdbhelper.lib.api.mapping import get_empty_item
         from tmdbhelper.lib.items.pages import PaginatedItems
 
-        _cache = BasicCache(filename=f'NextAiring.db')
+        _cache = self.tmdb_api.get_special_cache('TMDbListAiringNext.db')
 
         class _ParallelThread(ParallelThread):
             thread_max = min(get_setting('max_threads', mode='int') or 50, 50)

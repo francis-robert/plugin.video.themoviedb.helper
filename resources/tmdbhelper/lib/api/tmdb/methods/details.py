@@ -46,9 +46,8 @@ def get_tmdb_multisearch_request(self, query=None, validfy=True, media_type=None
 
 def get_tmdb_multisearch(self, query=None, validfy=True, media_type=None, **kwargs):
     kwargs['cache_days'] = CACHE_SHORT
-    kwargs['cache_name'] = 'TMDb.get_tmdb_multisearch.v1'
     kwargs['cache_combine_name'] = True
-    return self._cache.use_cache(
+    return self.get_special_cache('TMDbMultiSearch.db').use_cache(
         self.get_tmdb_multisearch_request,
         query=query, validfy=validfy, media_type=media_type, **kwargs
     )
@@ -58,9 +57,8 @@ def get_tmdb_id(self, tmdb_type=None, imdb_id=None, tvdb_id=None, query=None, ye
     if not tmdb_type:
         return
     kwargs['cache_days'] = CACHE_MEDIUM
-    kwargs['cache_name'] = 'TMDb.get_tmdb_id.v4'
     kwargs['cache_combine_name'] = True
-    return self._cache.use_cache(
+    return self.get_special_cache('TMDbID.db').use_cache(
         self.get_tmdb_id_request,
         tmdb_type=tmdb_type, imdb_id=imdb_id, tvdb_id=tvdb_id, query=query, year=year,
         episode_year=episode_year, raw_data=raw_data, **kwargs
@@ -176,8 +174,7 @@ def get_tvshow_nextaired(self, tmdb_id):
     if not tmdb_id:
         return {}
 
-    cache_name = f'TMDb.get_tv_nextaired.v2.{tmdb_id}'
-    infoproperties = self._cache.use_cache(_get_nextaired, cache_name=cache_name, cache_days=CACHE_SHORT)
+    infoproperties = self.get_special_cache('TMDbNextAired.db').use_cache(_get_nextaired, cache_name=f'{tmdb_id}', cache_days=CACHE_SHORT)
     return _get_formatted() if infoproperties else infoproperties
 
 

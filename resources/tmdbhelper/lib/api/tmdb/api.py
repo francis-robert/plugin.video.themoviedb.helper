@@ -104,6 +104,22 @@ class TMDbAPI(RequestAPI):
             return paginated_items.items + paginated_items.next_page
         return items
 
+    @property
+    def special_cache(self):
+        try:
+            return self._special_cache
+        except AttributeError:
+            self._special_cache = {}
+            return self._special_cache
+
+    def get_special_cache(self, filename):
+        try:
+            return self.special_cache[filename]
+        except KeyError:
+            from tmdbhelper.lib.files.bcache import BasicCache
+            self.special_cache[filename] = BasicCache(filename=filename)
+            return self.special_cache[filename]
+
     def configure_request_kwargs(self, kwargs):
         kwargs['language'] = self.req_language
         return kwargs
@@ -135,8 +151,8 @@ class TMDb(TMDbAPI, TMDbMethods):
         try:
             return self._genres
         except AttributeError:
-            cache_name = f'TMDb.GenreLookup.v2.{self.language}'
-            self._genres = self._cache.use_cache(self.get_genres, cache_name=cache_name)
+            cache_name = f'GenreLookup.{self.language}'
+            self._genres = self.get_special_cache('TMDbGenres.db').use_cache(self.get_genres, cache_name=cache_name)
             return self._genres
 
     @property
