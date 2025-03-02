@@ -27,6 +27,3 @@ class BasicCacheMem(BasicCache):
 
 class BasicCacheServiceMem(BasicCacheMem):
     _queue_limit = 20
-
-
-

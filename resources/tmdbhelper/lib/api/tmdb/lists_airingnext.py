@@ -1,17 +1,23 @@
 from tmdbhelper.lib.items.container import Container
-from tmdbhelper.lib.addon.plugin import convert_type, get_localized
+from tmdbhelper.lib.addon.plugin import convert_type, get_localized, get_setting
 
 
 class ListAiringNext(Container):
     def _get_items(self, seed_items: list, prefix: str, reverse: bool = False, **kwargs):
         from tmdbhelper.lib.addon.thread import ParallelThread
         from tmdbhelper.lib.addon.tmdate import date_in_range, is_future_timestamp
+        from tmdbhelper.lib.files.bcache import BasicCache
         from tmdbhelper.lib.api.mapping import get_empty_item
         from tmdbhelper.lib.items.pages import PaginatedItems
 
+        _cache = BasicCache(filename=f'NextAiring.db')
+
+        class _ParallelThread(ParallelThread):
+            thread_max = min(get_setting('max_threads', mode='int'), 50)
+
         def _get_nextaired_item(tmdb_id):
-            cache_name = f'TMDb.get_nextaired_item.{prefix}.{tmdb_id}'
-            cache_item = self.tmdb_api._cache.get_cache(cache_name)
+            cache_name = f'{prefix}.{tmdb_id}'
+            cache_item = _cache.get_cache(cache_name)
             if cache_item:
                 return cache_item
 
@@ -50,7 +56,7 @@ class ListAiringNext(Container):
                 'tmdb_id': tmdb_id,
                 'episode': item['infolabels']['episode'],
                 'season': item['infolabels']['season']}
-            return self.tmdb_api._cache.set_cache(item, cache_name=cache_name, cache_days=cache_days)
+            return _cache.set_cache(item, cache_name=cache_name, cache_days=cache_days)
 
         def _get_nextaired_item_thread(i):
             tmdb_id = i.get('tmdb_id') or self.tmdb_api.get_tmdb_id(
@@ -66,7 +72,7 @@ class ListAiringNext(Container):
             item['infolabels']['tvshowtitle'] = i.get('showtitle') or i.get('title')
             return item
 
-        with ParallelThread(seed_items, _get_nextaired_item_thread) as pt:
+        with _ParallelThread(seed_items, _get_nextaired_item_thread) as pt:
             item_queue = pt.queue
 
         items = [
