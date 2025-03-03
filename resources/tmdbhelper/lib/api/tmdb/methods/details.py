@@ -151,31 +151,39 @@ def get_tvshow_nextaired(self, tmdb_id):
     from tmdbhelper.lib.api.tmdb.mapping import get_episode_to_air
     from tmdbhelper.lib.addon.plugin import get_infolabel
 
-    def _get_nextaired():
-        response = self.get_response_json('tv', tmdb_id, language=self.req_language)
-        if not response:
-            return {}
-        infoproperties = {}
-        infoproperties.update(get_episode_to_air(response.get('next_episode_to_air'), 'next_aired'))
-        infoproperties.update(get_episode_to_air(response.get('last_episode_to_air'), 'last_aired'))
-        infoproperties['status'] = response.get('status')
-        return infoproperties
+    def _get_nextaired_ip(response):
+        ip = {}
+        ip.update(get_episode_to_air(response.get('next_episode_to_air'), 'next_aired'))
+        ip.update(get_episode_to_air(response.get('last_episode_to_air'), 'last_aired'))
+        ip['status'] = response.get('status')
+        return ip
 
-    def _get_formatted():
+    def _get_formatted(ip):
         df = get_infolabel('Skin.String(TMDbHelper.Date.Format)') or '%d %b %Y'
         for i in ['next_aired', 'last_aired']:
             try:
-                air_date = infoproperties[f'{i}.original']
+                air_date = ip[f'{i}.original']
             except KeyError:
                 continue
-            infoproperties[f'{i}.custom'] = format_date(air_date, df)
-        return infoproperties
+            ip[f'{i}.custom'] = format_date(air_date, df)
+        return ip
 
     if not tmdb_id:
         return {}
 
-    infoproperties = self.get_special_cache('TMDbNextAired.db').use_cache(_get_nextaired, cache_name=f'{tmdb_id}', cache_days=CACHE_SHORT)
-    return _get_formatted() if infoproperties else infoproperties
+    request = self.get_response_json('tv', tmdb_id, language=self.req_language)
+
+    if not request:
+        return {}
+
+    infoproperties = self.get_special_cache('TMDbNextAired_v2.db').use_cache(
+        _get_nextaired_ip, request,
+        cache_name=f'TV.{tmdb_id}', cache_days=CACHE_SHORT)
+
+    if not infoproperties:
+        return {}
+
+    return _get_formatted(infoproperties)
 
 
 def get_details_request(self, tmdb_type, tmdb_id, season=None, episode=None, cache_refresh=False):
