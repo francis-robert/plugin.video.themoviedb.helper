@@ -971,18 +971,6 @@
                         <heading>32472</heading>
                     </control>
                 </setting>
-                <setting id="mem_cache_level" type="integer" label="32512" help="32464">
-                    <level>0</level>
-                    <default>0</default>
-                    <constraints>
-                        <options>
-                            <option label="13170">0</option>
-                            <option label="32511">1</option>
-                            <option label="20422">2</option>
-                        </options>
-                    </constraints>
-                    <control type="spinner" format="integer"/>
-                </setting>
                 <setting id="delete_cache" type="action" label="32386" help="">
                     <level>0</level>
                     <data>RunScript(plugin.video.themoviedb.helper, delete_cache=select)</data>
